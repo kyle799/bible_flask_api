@@ -492,6 +492,87 @@ main {
   border-color: var(--ink);
 }
 
+/* ── BOOKS PANEL ─────────────────────────────────────────────── */
+.books-btn {
+  background: none;
+  border: 1px solid #3A2810;
+  border-radius: 2px;
+  color: #C8B88A;
+  font-size: 1rem;
+  line-height: 1;
+  padding: .33rem .55rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: .4em;
+  transition: all .15s;
+}
+.books-btn:hover, .books-btn.open {
+  background: #2E1C0A;
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.books-btn-label {
+  font-family: 'Cinzel', serif;
+  font-size: .6rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.books-panel {
+  position: fixed;
+  top: 56px;
+  left: 0; right: 0;
+  background: #160F04;
+  border-bottom: 1px solid #2E2010;
+  z-index: 99;
+  max-height: calc(100vh - 56px);
+  overflow-y: auto;
+  animation: fadeIn .15s ease;
+}
+.books-panel[hidden] { display: none; }
+
+.books-panel-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem 1.5rem 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem 3rem;
+}
+.books-section-label {
+  font-family: 'Cinzel', serif;
+  font-size: .58rem;
+  letter-spacing: .3em;
+  color: var(--gold);
+  text-transform: uppercase;
+  margin-bottom: .6rem;
+  padding-bottom: .5rem;
+  border-bottom: 1px solid #2E2010;
+}
+.books-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.book-item-btn {
+  background: none;
+  border: none;
+  color: #BBA882;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.05rem;
+  text-align: left;
+  padding: .28rem .4rem;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all .12s;
+}
+.book-item-btn:hover {
+  background: #2E1C0A;
+  color: var(--parchment);
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .wordmark, .divider { display: none; }
@@ -501,6 +582,8 @@ main {
   .book-index-title { font-size: 2rem; }
   .verses-wrap { font-size: 1.1rem; }
   .verse-block[data-vn="1"] .vtext::first-letter { font-size: 3rem; }
+  .books-btn-label { display: none; }
+  .books-panel-inner { grid-template-columns: 1fr; padding: 1rem 1rem 1.5rem; gap: 1.25rem; }
 }
 </style>
 </head>
@@ -510,6 +593,9 @@ main {
   <div class="header-inner">
     <span class="wordmark"><span class="wordmark-cross">✦</span>Scripture</span>
     <div class="divider"></div>
+    <button id="booksBtn" class="books-btn" aria-label="Browse books" type="button">
+      <span>☰</span><span class="books-btn-label">Books</span>
+    </button>
     <form class="nav-form" id="navForm">
       <input
         id="refInput"
@@ -528,6 +614,8 @@ main {
     </form>
   </div>
 </header>
+
+<div id="booksPanel" class="books-panel" hidden></div>
 
 <main id="main">
   <div class="welcome" id="welcomeEl">
@@ -933,6 +1021,56 @@ function toRoman(n) {
   v.forEach((val,i) => { while(n >= val) { r += s[i]; n -= val; } });
   return r;
 }
+
+// ── Books panel ────────────────────────────────────────────────────
+(function initBooksPanel() {
+  const OT_END    = BOOK_ORDER.indexOf('MAT'); // 39 OT books
+  const booksBtn   = document.getElementById('booksBtn');
+  const booksPanel = document.getElementById('booksPanel');
+
+  function makeList(ids) {
+    return ids.map(id =>
+      `<button class="book-item-btn" data-book-id="${id}">${esc(BOOK_DISPLAY_NAMES[id] || id)}</button>`
+    ).join('');
+  }
+
+  booksPanel.innerHTML = `
+    <div class="books-panel-inner">
+      <div class="books-section">
+        <div class="books-section-label">Old Testament</div>
+        <div class="books-list">${makeList(BOOK_ORDER.slice(0, OT_END))}</div>
+      </div>
+      <div class="books-section">
+        <div class="books-section-label">New Testament</div>
+        <div class="books-list">${makeList(BOOK_ORDER.slice(OT_END))}</div>
+      </div>
+    </div>`;
+
+  booksPanel.querySelectorAll('.book-item-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      closePanel();
+      showBookIndex(btn.dataset.bookId, true);
+    });
+  });
+
+  function closePanel() {
+    booksPanel.hidden = true;
+    booksBtn.classList.remove('open');
+  }
+
+  booksBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const opening = booksPanel.hidden;
+    booksPanel.hidden = !opening;
+    booksBtn.classList.toggle('open', opening);
+  });
+
+  document.addEventListener('click', e => {
+    if (!booksPanel.hidden && !booksPanel.contains(e.target) && e.target !== booksBtn) {
+      closePanel();
+    }
+  });
+})();
 </script>
 </body>
 </html>
