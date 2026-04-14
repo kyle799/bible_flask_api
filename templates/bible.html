@@ -537,7 +537,7 @@ window.addEventListener('popstate', e => {
 async function loadPassage(ref, translation, pushHistory) {
   showLoading();
   try {
-    const url = `/passage?ref=${encodeURIComponent(ref)}&translation=${encodeURIComponent(translation)}`;
+    const url = `passage?ref=${encodeURIComponent(ref)}&translation=${encodeURIComponent(translation)}`;
     const resp = await fetch(url);
     if (!resp.ok) {
       const body = await resp.json().catch(() => ({}));
@@ -548,7 +548,7 @@ async function loadPassage(ref, translation, pushHistory) {
     renderPassage(data, translation);
     if (pushHistory) {
       const cleanRef = `${state.bookName} ${state.chapter}`;
-      history.pushState({ref: cleanRef, translation}, '', `/bible?ref=${encodeURIComponent(cleanRef)}&translation=${encodeURIComponent(translation)}`);
+      history.pushState({ref: cleanRef, translation}, '', `bible?ref=${encodeURIComponent(cleanRef)}&translation=${encodeURIComponent(translation)}`);
       refInput.value = cleanRef;
     }
   } catch (err) {
