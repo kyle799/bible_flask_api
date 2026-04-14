@@ -1,0 +1,15 @@
+# Database
+*.db
+
+# Bible source XML files (clone from seven1m/open-bibles)
+bibles/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Env
+.env

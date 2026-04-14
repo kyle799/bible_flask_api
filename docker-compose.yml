@@ -1,0 +1,31 @@
+services:
+  api:
+    build: .
+    ports:
+      - "5002:5000"
+    volumes:
+      - bible_data:/data
+    environment:
+      DATABASE_PATH: /data/bible.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/translations')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  importer:
+    build: .
+    volumes:
+      - bible_data:/data
+      - ./bibles:/bibles:ro
+    environment:
+      DATABASE_PATH: /data/bible.db
+    entrypoint: ["python3", "import_all.py"]
+    command: ["--bibles-dir", "/bibles"]
+    profiles:
+      - import
+
+volumes:
+  bible_data:
