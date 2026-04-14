@@ -2,66 +2,59 @@
 
 A simple Flask/SQLite Bible REST API inspired by [seven1m/bible_api](https://github.com/seven1m/bible_api).
 
-## Setup
+Includes a web reader at `/bible` and JSON endpoints for verses, passages, and translations.
+
+---
+
+## Quickstart (Docker)
+
+The default setup ships with **WEB** (World English Bible), **KJV** (King James Version), and **ASV** (American Standard Version). WEB is the default translation.
+
+```bash
+git clone https://github.com/kyle799/bible_flask_api
+cd bible_flask_api
+
+# Get the Bible source files
+git clone https://github.com/seven1m/open-bibles bibles
+
+# Build the image, import the three default translations, start the API
+docker compose build
+docker compose run --rm importer --bibles-dir /bibles --only eng-web,eng-kjv,eng-asv
+docker compose up -d
+```
+
+The API is now running at `http://localhost:5002`.
+Open the web reader at `http://localhost:5002/bible`.
+
+---
+
+## Manual setup (no Docker)
 
 ```bash
 pip install -r requirements.txt
-```
 
-## Importing Bible data
-
-The importer accepts **OSIS XML** files (the format used by [seven1m/open-bibles](https://github.com/seven1m/open-bibles)) and **CSV** files.
-
-### OSIS XML (recommended)
-
-```bash
-# Clone the open-bibles data
 git clone https://github.com/seven1m/open-bibles bibles
 
-# Import a translation (identifier is auto-detected from filename)
-python import_bible.py bibles/eng-web.osis.xml \
-  --name "World English Bible" \
-  --license "Public Domain"
+python import_all.py --bibles-dir bibles --only eng-web,eng-kjv,eng-asv
 
-# Import another translation
-python import_bible.py bibles/eng-kjv.osis.xml \
-  --name "King James Version" \
-  --license "Public Domain"
-```
-
-### CSV
-
-The CSV must have columns: `book_id, book, chapter, verse, text`
-
-```bash
-python import_bible.py data/web.csv \
-  --id web \
-  --name "World English Bible" \
-  --language English \
-  --language-code eng
-```
-
-### Overwrite existing data
-
-```bash
-python import_bible.py bibles/eng-web.osis.xml --overwrite
-```
-
-## Running the server
-
-```bash
 python app.py
-# or
-flask --app app run
 ```
 
 The API listens on `http://localhost:5000` by default.
 
-Set `DATABASE_PATH` to use a custom SQLite file location (default: `bible.db`).
-
 ---
 
 ## Endpoints
+
+### `GET /bible`
+
+Web reader UI. Supports URL params for bookmarkable passages:
+
+```
+/bible?ref=John+3&translation=kjv
+```
+
+---
 
 ### `GET /translations`
 
@@ -70,13 +63,9 @@ Returns all available translations.
 ```json
 {
   "translations": [
-    {
-      "identifier": "web",
-      "name": "World English Bible",
-      "language": "English",
-      "language_code": "eng",
-      "license": "Public Domain"
-    }
+    { "identifier": "web", "name": "World English Bible", "language": "English", "language_code": "eng", "license": "Public Domain" },
+    { "identifier": "kjv", "name": "King James Version",  "language": "English", "language_code": "eng", "license": "Public Domain" },
+    { "identifier": "asv", "name": "American Standard Version (1901)", "language": "English", "language_code": "eng", "license": "Public Domain" }
   ]
 }
 ```
@@ -85,25 +74,23 @@ Returns all available translations.
 
 ### `GET /verse/<book>/<chapter>/<verse>`
 
-Fetch a single verse. `book` accepts full names or abbreviations (case-insensitive).
+Fetch a single verse. `book` accepts full names or common abbreviations (case-insensitive).
 
-| Query param   | Default | Description                     |
-|---------------|---------|---------------------------------|
-| `translation` | `web`   | Translation identifier          |
+| Query param   | Default | Description            |
+|---------------|---------|------------------------|
+| `translation` | `web`   | Translation identifier |
 
-**Example:** `GET /verse/John/3/16`
+```
+GET /verse/John/3/16
+GET /verse/John/3/16?translation=kjv
+GET /verse/Ps/23/1
+```
 
 ```json
 {
   "reference": "John 3:16",
   "verses": [
-    {
-      "book_id": "JHN",
-      "book_name": "John",
-      "chapter": 3,
-      "verse": 16,
-      "text": "For God so loved the world..."
-    }
+    { "book_id": "JHN", "book_name": "John", "chapter": 3, "verse": 16, "text": "For God so loved the world..." }
   ],
   "text": "For God so loved the world...",
   "translation_id": "web",
@@ -118,26 +105,56 @@ Fetch a single verse. `book` accepts full names or abbreviations (case-insensiti
 
 Fetch a passage by reference string.
 
-| Query param   | Default | Description                                         |
-|---------------|---------|-----------------------------------------------------|
-| `ref`         | —       | Reference e.g. `John+3:16-18` or `John+3:16-4:1`   |
-| `translation` | `web`   | Translation identifier                              |
+| Query param   | Default | Description                                       |
+|---------------|---------|---------------------------------------------------|
+| `ref`         | —       | Reference string (spaces or `+` as word separator)|
+| `translation` | `web`   | Translation identifier                            |
 
-Supported reference formats:
-- `John 3:16` — single verse
-- `John 3:16-18` — verse range, same chapter
-- `John 3:16-4:1` — cross-chapter range
-- `John 3` — whole chapter
+Supported formats:
 
-**Example:** `GET /passage?ref=John+3:16-18&translation=web`
+```
+GET /passage?ref=John+3:16              # single verse
+GET /passage?ref=John+3:16-18           # verse range
+GET /passage?ref=John+3:16-4:1          # cross-chapter range
+GET /passage?ref=John+3                 # whole chapter
+GET /passage?ref=Psalm+23&translation=kjv
+```
 
 ```json
 {
   "reference": "JHN 3:16-18",
-  "verses": [...],
+  "verses": [
+    { "book_id": "JHN", "book_name": "John", "chapter": 3, "verse": 16, "text": "..." },
+    { "book_id": "JHN", "book_name": "John", "chapter": 3, "verse": 17, "text": "..." },
+    { "book_id": "JHN", "book_name": "John", "chapter": 3, "verse": 18, "text": "..." }
+  ],
   "text": "For God so loved the world...",
   "translation_id": "web",
   "translation_name": "World English Bible",
   "translation_note": "Public Domain"
 }
+```
+
+---
+
+## Adding more translations
+
+All 43 open-licensed translations from [seven1m/open-bibles](https://github.com/seven1m/open-bibles) are supported (OSIS, USFX, and Zefania XML formats). To add them:
+
+```bash
+# Add a single translation
+docker compose run --rm importer --bibles-dir /bibles --only eng-darby
+
+# Add all available translations
+docker compose run --rm importer --bibles-dir /bibles
+
+# Reimport (overwrite existing)
+docker compose run --rm importer --bibles-dir /bibles --only eng-web --overwrite
+```
+
+Or without Docker:
+
+```bash
+python import_all.py --bibles-dir bibles --only eng-darby
+python import_all.py --bibles-dir bibles   # all translations
 ```
