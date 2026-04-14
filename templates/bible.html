@@ -398,6 +398,49 @@ main {
   to   { opacity: 1; }
 }
 
+/* ── VERSE NAV ──────────────────────────────────────────────────── */
+.verse-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.vn-chip {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--muted);
+  font-family: 'Cinzel', serif;
+  font-size: .58rem;
+  padding: .22rem .42rem;
+  cursor: pointer;
+  min-width: 26px;
+  text-align: center;
+  transition: all .15s;
+}
+.vn-chip:hover {
+  background: var(--ink);
+  color: var(--parchment);
+  border-color: var(--ink);
+}
+.vn-chip.active {
+  background: var(--crimson);
+  color: #F0E4D4;
+  border-color: var(--crimson);
+}
+
+@keyframes verseFlash {
+  0%   { background: rgba(184,145,58,.22); }
+  35%  { background: rgba(184,145,58,.22); }
+  100% { background: transparent; }
+}
+.verse-block.highlighted {
+  animation: verseFlash 2s ease forwards;
+  border-radius: 2px;
+}
+
 /* ── BOOK INDEX ─────────────────────────────────────────────────── */
 .book-index { animation: fadeUp .5s ease both; }
 .book-index-header { text-align: center; margin-bottom: 3rem; }
@@ -768,6 +811,15 @@ function renderPassage(data, translation) {
   const hasPrev  = state.chapter > 1 || bookIdx > 0;
   const hasNext  = state.chapter < maxChap || bookIdx < BOOK_ORDER.length - 1;
 
+  // Verse nav (single-chapter only)
+  let verseNavHtml = '';
+  if (chapters.length === 1) {
+    const chips = verses.map(v =>
+      `<button class="vn-chip" data-vn="${v.verse}">${v.verse}</button>`
+    ).join('');
+    verseNavHtml = `<div class="verse-nav">${chips}</div>`;
+  }
+
   main.innerHTML = `
     <div class="passage-header">
       <span class="book-label">${esc(state.bookName)}</span>
@@ -775,6 +827,7 @@ function renderPassage(data, translation) {
       <div class="chapter-ornament"><span class="ornament-center">✦</span></div>
       <span class="trans-pill">${esc(transLabel.toUpperCase())}</span>
     </div>
+    ${verseNavHtml}
     <div class="verses-wrap" id="versesWrap">${verseHtml}</div>
     <div class="chap-nav">
       <button class="nav-btn" id="prevBtn" ${hasPrev ? '' : 'disabled'}>← Previous</button>
@@ -785,6 +838,31 @@ function renderPassage(data, translation) {
   // Stagger verse entrance
   requestAnimationFrame(() => {
     document.querySelectorAll('.verse-block').forEach(el => el.classList.add('in'));
+  });
+
+  // Verse nav click handlers
+  document.querySelectorAll('.vn-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const vn = chip.dataset.vn;
+      const block = document.querySelector(`.verse-block[data-vn="${vn}"]`);
+      if (!block) return;
+
+      // Clear previous active chip and highlight
+      document.querySelectorAll('.vn-chip.active').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.verse-block.highlighted').forEach(el => {
+        el.classList.remove('highlighted');
+        void el.offsetWidth; // force reflow so animation restarts if same verse clicked twice
+      });
+
+      chip.classList.add('active');
+      block.classList.add('highlighted');
+      block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      block.addEventListener('animationend', () => {
+        block.classList.remove('highlighted');
+        chip.classList.remove('active');
+      }, { once: true });
+    });
   });
 
   document.getElementById('prevBtn').addEventListener('click', navigatePrev);
