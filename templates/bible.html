@@ -426,7 +426,7 @@ main {
       >
       <select id="transSelect" class="trans-select">
         {% for t in translations %}
-        <option value="{{ t.identifier }}">{{ t.identifier | upper }}</option>
+        <option value="{{ t.identifier }}"{% if t.identifier == default_translation %} selected{% endif %}>{{ t.identifier | upper }}</option>
         {% endfor %}
       </select>
       <button type="submit" class="go-btn">Go</button>

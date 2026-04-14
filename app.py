@@ -77,7 +77,9 @@ def bible_reader():
     """Web reader UI."""
     with get_db() as conn:
         translations = list_translations(conn)
-    return render_template("bible.html", translations=translations)
+    # Sort: default first, then alphabetical by identifier
+    translations.sort(key=lambda t: (t["identifier"] != DEFAULT_TRANSLATION, t["identifier"]))
+    return render_template("bible.html", translations=translations, default_translation=DEFAULT_TRANSLATION)
 
 
 @app.route("/translations", methods=["GET"])
