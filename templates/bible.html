@@ -398,12 +398,64 @@ main {
   to   { opacity: 1; }
 }
 
+/* ── BOOK INDEX ─────────────────────────────────────────────────── */
+.book-index { animation: fadeUp .5s ease both; }
+.book-index-header { text-align: center; margin-bottom: 3rem; }
+.book-index-title {
+  font-family: 'Cinzel', serif;
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1;
+  display: block;
+  margin-bottom: 1.4rem;
+}
+.book-index-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: .9rem;
+}
+.book-index-ornament::before,
+.book-index-ornament::after {
+  content: '';
+  width: 50px;
+  height: 1px;
+}
+.book-index-ornament::before { background: linear-gradient(90deg, transparent, var(--gold-lt)); }
+.book-index-ornament::after  { background: linear-gradient(90deg, var(--gold-lt), transparent); }
+.chapter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  gap: .5rem;
+  margin-top: 2rem;
+}
+.chap-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--muted);
+  font-family: 'Cinzel', serif;
+  font-size: .75rem;
+  font-weight: 500;
+  padding: .55rem .25rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all .15s;
+}
+.chap-btn:hover {
+  background: var(--ink);
+  color: var(--parchment);
+  border-color: var(--ink);
+}
+
 /* ── RESPONSIVE ─────────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .wordmark, .divider { display: none; }
   .header-inner { padding: 0 .9rem; gap: .5rem; }
   main { padding: 2.5rem 1.25rem 5rem; }
   .chapter-numeral { font-size: 2.8rem; }
+  .book-index-title { font-size: 2rem; }
   .verses-wrap { font-size: 1.1rem; }
   .verse-block[data-vn="1"] .vtext::first-letter { font-size: 3rem; }
 }
@@ -473,6 +525,81 @@ const BOOK_ORDER = ["GEN","EXO","LEV","NUM","DEU","JOS","JDG","RUT",
   "2TH","1TI","2TI","TIT","PHM","HEB","JAS","1PE","2PE","1JN","2JN",
   "3JN","JUD","REV"];
 
+const BOOK_DISPLAY_NAMES = {
+  GEN:"Genesis",EXO:"Exodus",LEV:"Leviticus",NUM:"Numbers",DEU:"Deuteronomy",
+  JOS:"Joshua",JDG:"Judges",RUT:"Ruth",
+  "1SA":"1 Samuel","2SA":"2 Samuel","1KI":"1 Kings","2KI":"2 Kings",
+  "1CH":"1 Chronicles","2CH":"2 Chronicles",EZR:"Ezra",NEH:"Nehemiah",EST:"Esther",
+  JOB:"Job",PSA:"Psalms",PRO:"Proverbs",ECC:"Ecclesiastes",SNG:"Song of Solomon",
+  ISA:"Isaiah",JER:"Jeremiah",LAM:"Lamentations",EZK:"Ezekiel",DAN:"Daniel",
+  HOS:"Hosea",JOL:"Joel",AMO:"Amos",OBA:"Obadiah",JON:"Jonah",MIC:"Micah",
+  NAM:"Nahum",HAB:"Habakkuk",ZEP:"Zephaniah",HAG:"Haggai",ZEC:"Zechariah",MAL:"Malachi",
+  MAT:"Matthew",MRK:"Mark",LUK:"Luke",JHN:"John",ACT:"Acts",ROM:"Romans",
+  "1CO":"1 Corinthians","2CO":"2 Corinthians",GAL:"Galatians",EPH:"Ephesians",PHP:"Philippians",COL:"Colossians",
+  "1TH":"1 Thessalonians","2TH":"2 Thessalonians","1TI":"1 Timothy","2TI":"2 Timothy",TIT:"Titus",PHM:"Philemon",
+  HEB:"Hebrews",JAS:"James","1PE":"1 Peter","2PE":"2 Peter","1JN":"1 John","2JN":"2 John","3JN":"3 John",
+  JUD:"Jude",REV:"Revelation"
+};
+
+const BOOK_ALIASES = {
+  "genesis":"GEN","gen":"GEN","exodus":"EXO","exo":"EXO","exod":"EXO","ex":"EXO",
+  "leviticus":"LEV","lev":"LEV","numbers":"NUM","num":"NUM",
+  "deuteronomy":"DEU","deu":"DEU","deut":"DEU",
+  "joshua":"JOS","jos":"JOS","josh":"JOS",
+  "judges":"JDG","jdg":"JDG","judg":"JDG",
+  "ruth":"RUT","rut":"RUT",
+  "1samuel":"1SA","1sa":"1SA","1sam":"1SA","1 samuel":"1SA","1 sam":"1SA",
+  "2samuel":"2SA","2sa":"2SA","2sam":"2SA","2 samuel":"2SA","2 sam":"2SA",
+  "1kings":"1KI","1ki":"1KI","1kgs":"1KI","1 kings":"1KI","1 kgs":"1KI",
+  "2kings":"2KI","2ki":"2KI","2kgs":"2KI","2 kings":"2KI","2 kgs":"2KI",
+  "1chronicles":"1CH","1ch":"1CH","1chr":"1CH","1 chronicles":"1CH","1 chr":"1CH",
+  "2chronicles":"2CH","2ch":"2CH","2chr":"2CH","2 chronicles":"2CH","2 chr":"2CH",
+  "ezra":"EZR","ezr":"EZR","nehemiah":"NEH","neh":"NEH",
+  "esther":"EST","est":"EST","esth":"EST",
+  "job":"JOB","psalms":"PSA","psalm":"PSA","psa":"PSA","ps":"PSA",
+  "proverbs":"PRO","pro":"PRO","prov":"PRO",
+  "ecclesiastes":"ECC","ecc":"ECC","eccl":"ECC",
+  "songofsolomon":"SNG","song":"SNG","sng":"SNG","sos":"SNG","canticles":"SNG",
+  "isaiah":"ISA","isa":"ISA","jeremiah":"JER","jer":"JER",
+  "lamentations":"LAM","lam":"LAM","ezekiel":"EZK","ezk":"EZK","ezek":"EZK",
+  "daniel":"DAN","dan":"DAN","hosea":"HOS","hos":"HOS",
+  "joel":"JOL","jol":"JOL","amos":"AMO","amo":"AMO",
+  "obadiah":"OBA","oba":"OBA","obad":"OBA",
+  "jonah":"JON","jon":"JON","micah":"MIC","mic":"MIC",
+  "nahum":"NAM","nam":"NAM","habakkuk":"HAB","hab":"HAB",
+  "zephaniah":"ZEP","zep":"ZEP","zeph":"ZEP",
+  "haggai":"HAG","hag":"HAG","zechariah":"ZEC","zec":"ZEC","zech":"ZEC",
+  "malachi":"MAL","mal":"MAL",
+  "matthew":"MAT","mat":"MAT","matt":"MAT","mt":"MAT",
+  "mark":"MRK","mrk":"MRK","mk":"MRK","mar":"MRK",
+  "luke":"LUK","luk":"LUK","lk":"LUK",
+  "john":"JHN","jhn":"JHN","jn":"JHN",
+  "acts":"ACT","act":"ACT","romans":"ROM","rom":"ROM",
+  "1corinthians":"1CO","1co":"1CO","1cor":"1CO","1 corinthians":"1CO","1 cor":"1CO",
+  "2corinthians":"2CO","2co":"2CO","2cor":"2CO","2 corinthians":"2CO","2 cor":"2CO",
+  "galatians":"GAL","gal":"GAL","ephesians":"EPH","eph":"EPH",
+  "philippians":"PHP","php":"PHP","phil":"PHP",
+  "colossians":"COL","col":"COL",
+  "1thessalonians":"1TH","1th":"1TH","1thess":"1TH","1 thessalonians":"1TH","1 thess":"1TH",
+  "2thessalonians":"2TH","2th":"2TH","2thess":"2TH","2 thessalonians":"2TH","2 thess":"2TH",
+  "1timothy":"1TI","1ti":"1TI","1tim":"1TI","1 timothy":"1TI","1 tim":"1TI",
+  "2timothy":"2TI","2ti":"2TI","2tim":"2TI","2 timothy":"2TI","2 tim":"2TI",
+  "titus":"TIT","tit":"TIT","philemon":"PHM","phm":"PHM","phlm":"PHM",
+  "hebrews":"HEB","heb":"HEB","james":"JAS","jas":"JAS",
+  "1peter":"1PE","1pe":"1PE","1pet":"1PE","1 peter":"1PE","1 pet":"1PE",
+  "2peter":"2PE","2pe":"2PE","2pet":"2PE","2 peter":"2PE","2 pet":"2PE",
+  "1john":"1JN","1jn":"1JN","1jo":"1JN","1 john":"1JN",
+  "2john":"2JN","2jn":"2JN","2jo":"2JN","2 john":"2JN",
+  "3john":"3JN","3jn":"3JN","3jo":"3JN","3 john":"3JN",
+  "jude":"JUD","jud":"JUD","revelation":"REV","rev":"REV","revelations":"REV"
+};
+
+/** Returns book ID if input is a bare book name, otherwise null. */
+function resolveBookOnly(input) {
+  const key = input.toLowerCase().replace(/\./g, '').trim();
+  return BOOK_ALIASES[key] || null;
+}
+
 // ── State ──────────────────────────────────────────────────────────
 let state = { bookId: null, bookName: null, chapter: null, translation: 'web' };
 
@@ -491,8 +618,11 @@ const transSelect = document.getElementById('transSelect');
     transSelect.value = trans;
   }
   if (ref) {
-    refInput.value = ref.replace(/\+/g,' ');
-    loadPassage(ref.replace(/\+/g,' '), transSelect.value, false);
+    const cleanRef = ref.replace(/\+/g,' ');
+    refInput.value = cleanRef;
+    const bookId = resolveBookOnly(cleanRef);
+    if (bookId) { showBookIndex(bookId, false); }
+    else { loadPassage(cleanRef, transSelect.value, false); }
   }
   // example chips
   document.querySelectorAll('.example-chip').forEach(btn => {
@@ -508,11 +638,48 @@ const transSelect = document.getElementById('transSelect');
   });
 })();
 
+// ── Book index ─────────────────────────────────────────────────────
+function showBookIndex(bookId, pushHistory) {
+  const displayName = BOOK_DISPLAY_NAMES[bookId] || bookId;
+  const chapCount   = CHAPTER_COUNTS[bookId] || 1;
+
+  let btns = '';
+  for (let i = 1; i <= chapCount; i++) {
+    btns += `<button class="chap-btn" data-book="${esc(displayName)}" data-ch="${i}">${i}</button>`;
+  }
+
+  main.innerHTML = `
+    <div class="book-index">
+      <div class="book-index-header">
+        <span class="book-label">Select a chapter</span>
+        <span class="book-index-title">${esc(displayName)}</span>
+        <div class="book-index-ornament"><span class="ornament-center">✦</span></div>
+      </div>
+      <div class="chapter-grid">${btns}</div>
+    </div>`;
+
+  document.querySelectorAll('.chap-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const ref = `${btn.dataset.book} ${btn.dataset.ch}`;
+      refInput.value = ref;
+      loadPassage(ref, transSelect.value, true);
+    });
+  });
+
+  if (pushHistory) {
+    history.pushState({bookIndex: bookId}, '', `/bible?ref=${encodeURIComponent(displayName)}`);
+    refInput.value = displayName;
+  }
+}
+
 // ── Events ─────────────────────────────────────────────────────────
 navForm.addEventListener('submit', e => {
   e.preventDefault();
   const ref = refInput.value.trim();
-  if (ref) loadPassage(ref, transSelect.value, true);
+  if (!ref) return;
+  const bookId = resolveBookOnly(ref);
+  if (bookId) { showBookIndex(bookId, true); return; }
+  loadPassage(ref, transSelect.value, true);
 });
 
 transSelect.addEventListener('change', () => {
@@ -526,7 +693,10 @@ transSelect.addEventListener('change', () => {
 });
 
 window.addEventListener('popstate', e => {
-  if (e.state?.ref) {
+  if (e.state?.bookIndex) {
+    refInput.value = BOOK_DISPLAY_NAMES[e.state.bookIndex] || e.state.bookIndex;
+    showBookIndex(e.state.bookIndex, false);
+  } else if (e.state?.ref) {
     refInput.value = e.state.ref;
     if (e.state.translation) transSelect.value = e.state.translation;
     loadPassage(e.state.ref, e.state.translation || 'web', false);
