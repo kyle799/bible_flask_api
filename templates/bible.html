@@ -667,7 +667,7 @@ function showBookIndex(bookId, pushHistory) {
   });
 
   if (pushHistory) {
-    history.pushState({bookIndex: bookId}, '', `/bible?ref=${encodeURIComponent(displayName)}`);
+    history.pushState({bookIndex: bookId}, '', `bible?ref=${encodeURIComponent(displayName)}`);
     refInput.value = displayName;
   }
 }
